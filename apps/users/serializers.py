@@ -19,7 +19,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model=User
         fields=[
-            'usernmae',
+            'username',
             'email',
             'password',
             'password2',
@@ -42,8 +42,8 @@ class RegisterSerializer(serializers.ModelSerializer):
             username=validated_data['username'],
             email=validated_data['email'],
             password=validated_data['password'],
-            role=validated_data.get['role','candidate'],
-            phone=validated_data.get['phone','']
+            role=validated_data.get('role','candidate'),
+            phone=validated_data.get('phone','')
             
         )
         return user
