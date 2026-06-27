@@ -24,6 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/',include('apps.users.urls')),
     path('api/companies/',include('apps.companies.urls')),
+    path('api/questions/', include('apps.questions.urls')),
 ]
 if settings.DEBUG:
     urlpatterns += static(
