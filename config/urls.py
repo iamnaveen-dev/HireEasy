@@ -26,6 +26,8 @@ urlpatterns = [
     path('api/companies/',include('apps.companies.urls')),
     path('api/questions/', include('apps.questions.urls')),
     path('api/interviews/', include('apps.interviews.urls')),
+    path('api/ai/', include('apps.ai_engine.urls')),
+    path('api/reports/', include('apps.reports.urls')),
 ]
 if settings.DEBUG:
     urlpatterns += static(

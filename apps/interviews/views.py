@@ -11,6 +11,8 @@ from apps.interviews.serializers import (
     InterviewQuestionSerializer,
 )
 from apps.questions.models import Question
+from apps.ai_engine.evaluator import evaluate_answer
+from apps.ai_engine.models import AIEvaluation
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -121,6 +123,15 @@ def update_interview_status_view(request, pk):
         if notes:
             interview.interviewer_notes = notes
         interview.save()
+
+        if new_status == 'completed':
+            from apps.reports.tasks import generate_report_task
+            generate_report_task(str(interview.id))
+            return Response({
+                'message': 'Interview completed. Report generated.',
+                'interview': InterviewSerializer(interview).data,
+            })
+
         return Response({
             'message': f'Interview status updated to {new_status}',
             'interview': InterviewSerializer(interview).data,
@@ -175,6 +186,33 @@ def submit_answer_view(request, pk, iq_pk):
     time_taken = request.data.get('time_taken_seconds', 0)
     interview_question.candidate_answer = answer
     interview_question.time_taken_seconds = time_taken
+    interview_question.save()
+    question = interview_question.question
+    evaluation_data = evaluate_answer(
+        question_title=question.title,
+        question_description=question.description,
+        expected_answer=question.expected_answer,
+        candidate_answer=answer,
+        difficulty=question.difficulty
+    )
+
+    AIEvaluation.objects.update_or_create(
+        interview_question=interview_question,
+        defaults={
+            'score': evaluation_data['score'],
+            'feedback': evaluation_data['feedback'],
+            'strengths': evaluation_data.get('strengths', []),
+            'improvements': evaluation_data.get('improvements', []),
+            'keywords_matched': evaluation_data.get('keywords_matched', []),
+            'keywords_missed': evaluation_data.get('keywords_missed', []),
+            'confidence_level': evaluation_data.get('confidence_level', 'medium'),
+            'tokens_used': evaluation_data.get('tokens_used', 0),
+            'model_used': evaluation_data.get('model_used', 'gpt-4'),
+        }
+    )
+
+    interview_question.ai_score = evaluation_data['score']
+    interview_question.ai_feedback = evaluation_data['feedback']
     interview_question.save()
     return Response({
         'message': 'Answer submitted successfully',

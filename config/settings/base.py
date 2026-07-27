@@ -1,6 +1,9 @@
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
+import os
+
+OPENAI_API_KEY = config('OPENAI_API_KEY')
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -116,11 +119,11 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [('127.0.0.1', 6379)],
+            'hosts': [('127.0.0.1', 6380)],
         },
     },
 }
 
-CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
-CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0'
+CELERY_BROKER_URL = 'redis://127.0.0.1:6380/0'
+CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6380/0'
 CELERY_TIMEZONE = 'Asia/Kolkata'
