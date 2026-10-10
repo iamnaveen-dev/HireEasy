@@ -85,22 +85,37 @@ class CreateInterviewSerializer(serializers.Serializer):
     )
 
     def validate_candidate_email(self, value):
-        try:
-            user = User.objects.get(email=value)
-            return value
-        except User.DoesNotExist:
+        users = User.objects.filter(email=value)
+        if not users.exists():
             raise serializers.ValidationError(
                 'No candidate found with this email'
             )
+        return value
 
     def create(self, validated_data):
         request = self.context.get('request')
         candidate_email = validated_data.pop('candidate_email')
-        candidate = User.objects.get(email=candidate_email)
+
+        candidate = User.objects.filter(
+            email=candidate_email
+        ).first()
+
+        if not candidate:
+            raise serializers.ValidationError(
+                'Candidate not found'
+            )
+
+        try:
+            company = request.user.company
+        except Exception:
+            raise serializers.ValidationError(
+                'You do not have a company registered'
+            )
+
         interview = Interview.objects.create(
             interviewer=request.user,
             candidate=candidate,
-            company=request.user.company,
+            company=company,
             **validated_data
         )
         return interview
